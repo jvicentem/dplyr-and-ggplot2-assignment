@@ -37,6 +37,8 @@ de todos los ejercicios**.
 library(ggplot2)
 library(dplyr)
 library(nycflights13)
+# Para la resolución de los ejercicios, vamos a importar el paquete magrittr y así poder utilizar el operador
+library(magrittr)
 ```
 
 ## Ejercicio 1 (*30 puntos*)
@@ -44,7 +46,24 @@ library(nycflights13)
 Utiliza las funciones incluidas en el paquete `dplyr`, para responder a las siguientes preguntas:
 
 a) ¿Cuantos vuelos se realizan en total cada mes?
+
+```{r}
+# A continuación se encuentra el código cuya salida es un data frame con una columna llamada "month" donde se encuentran los meses representados por números y otra columna llamada "number_of_flights" que contiene el número de vuelos por cada mes
+flights %>% 
+  select(month, flight) %>% 
+  group_by(month) %>% 
+  summarise(number_of_flights = n())
+```
 b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el año?
+```{r}
+# El aeropuesto con mayor número de salidas de vuelos en todo el año es el correspondiente a las siglas EWR (Newark Liberty International Airport), con 120.835 vuelos en el año 2013
+flights %>%
+  select(year, origin, flight) %>% # Quizás no sea necesario seleccionar la variable "year" ya que los datos con los que trabajamos son únicamente del 2013, es decir, hay datos de un sólo año
+  group_by(year, origin) %>%
+  summarise(number_of_flights = n()) %>%
+  arrange(desc(number_of_flights)) %>%
+  filter(row_number() == 1)
+```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
@@ -134,3 +153,6 @@ aeropuerto de Newark (código 'EWR'). ¿Se observan diferencias notables?
 ```
 
 *[INTRODUCE AQUÍ LAS CONCLUSIONES]*
+
+## Notas finales
+Para la realización de esta práctica se ha utilizado el IDE RStudio, además de utilizar la herramienta de control de versiones Git, siempre intentando seguir las pautas *git-flow*. Esta práctica se encuentra en el siguiente repositorio de Github: [https://github.com/jvicentem/dplyr-and-ggplot2-assignment](https://github.com/jvicentem/dplyr-and-ggplot2-assignment)
