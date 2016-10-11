@@ -58,16 +58,47 @@ b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el a�
 ```{r}
 # El aeropuesto con mayor número de salidas de vuelos en todo el año es el correspondiente a las siglas EWR (Newark Liberty International Airport), con 120.835 vuelos en el año 2013
 flights %>%
-  select(year, origin, flight) %>% # Quizás no sea necesario seleccionar la variable "year" ya que los datos con los que trabajamos son únicamente del 2013, es decir, hay datos de un sólo año
-  group_by(year, origin) %>%
+  select(origin, flight) %>% 
+  group_by(origin) %>%
   summarise(number_of_flights = n()) %>%
   arrange(desc(number_of_flights)) %>%
   filter(row_number() == 1)
 ```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
+```{r}
+# La compañía con mayor número de salidas de vuelos en los meses de verano es UA (United Airlines), con 19.859 vuelos
+flights %>%
+  select(carrier, month, flight) %>%
+  group_by(carrier) %>%
+  filter(month >= 6 & month <= 9) %>%
+  summarise(number_of_flights = n()) %>%
+  arrange(desc(number_of_flights)) %>%
+  filter(row_number() == 1)  
+```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
+```{r}
+# La compañía con más tiempo de vuelo es UA (United Airlines) con 12.237.728 minutos
+flights %>%
+  select(carrier, air_time) %>%
+  group_by(carrier) %>%
+  summarise(total_air_time = sum(air_time, na.rm = TRUE)) %>%
+  arrange(desc(total_air_time)) %>%
+  filter(row_number() == 1)  
+```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
+```{r}
+# La compañía aérea con mayores retrasos de salida es aquella con las siglas EV, acumulando un total de 1.024.829 minutos de retraso
+flights %>%
+  select(carrier, dep_delay) %>%
+  group_by(carrier) %>%
+  summarise(total_dep_delay = sum(dep_delay, na.rm = TRUE)) %>%
+  arrange(desc(total_dep_delay)) %>%
+  filter(row_number() == 1)  
+
+# El coeficiente de correlación entre las variables es de r = -0.02240508, por lo que no hay una relación lineal entre ellas
+cor(flights$dep_delay, flights$air_time, use="complete") # Se utiliza use="complete" para no tener encuenta observaciones con valores faltantes
+```
 
 ```{r ejercicio-1, warning=FALSE}
 # Introduce aquí el código para generar la respuesta
