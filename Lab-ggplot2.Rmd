@@ -96,8 +96,34 @@ flights %>%
   arrange(desc(total_dep_delay)) %>%
   filter(row_number() == 1)  
 
-# El coeficiente de correlación entre las variables es de r = -0.02240508, por lo que no hay una relación lineal entre ellas
+# El coeficiente de correlación entre las variables es de r = -0.02240508, por lo que no hay una relación fuerte entre ellas
 cor(flights$dep_delay, flights$air_time, use="complete") # Se utiliza use="complete" para no tener encuenta observaciones con valores faltantes
+
+flights %>%
+  select(air_time, dep_delay) %>%
+  group_by(air_time, dep_delay) %>%
+  mutate(count = n()) %>%
+  ggplot(aes(air_time, dep_delay)) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  labs(x="Tiempo de vuelo (min)", y="Retraso (min)") +
+  geom_smooth(method = 'gam') +
+  scale_size_area() +
+  ggtitle("Relación entre tiempo de vuelo y retrasos en los vuelos") +
+  scale_radius(name="Núm. vuelos")
+
+# Datos transformados por logaritmos... ¿se puede hacer esto?
+flights %>%
+  select(air_time, dep_delay) %>%
+  mutate(air_timel = log(air_time), dep_delayl = log(dep_delay)) %>%
+  group_by(air_timel, dep_delayl) %>%
+  mutate(count = n()) %>%
+  ggplot(aes(air_timel, dep_delayl)) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  labs(x="Tiempo de vuelo (min)", y="Retraso (min)") +
+  geom_smooth(method = 'gam') +
+  scale_size_area() +
+  ggtitle("Relación entre tiempo de vuelo y retrasos en los vuelos") +
+  scale_radius(name="Núm. vuelos")
 ```
 
 ```{r ejercicio-1, warning=FALSE}
