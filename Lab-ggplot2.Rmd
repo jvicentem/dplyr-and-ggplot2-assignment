@@ -5,6 +5,8 @@ date: "7 de octubre de 2016"
 output: pdf_document
 ---
 
+# NOTA: si tenemos que filtrar datos por aquellos que no tenemos NA, probar a filtrar por columnas, todos, etc. y ver lo que pasa
+
 ## Introducción
 El paquete `nycflights13`, disponible en CRAN, contiene datos sobre 336.776 vuelos
 que despegaron de alguno de los tres aeropuertos que dan servicio a la ciudad
@@ -57,12 +59,20 @@ flights %>%
 b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el año?
 ```{r}
 # El aeropuesto con mayor número de salidas de vuelos en todo el año es el correspondiente a las siglas EWR (Newark Liberty International Airport), con 120.835 vuelos en el año 2013
-flights %>%
-  select(origin, flight) %>% 
-  group_by(origin) %>%
-  summarise(number_of_flights = n()) %>%
-  arrange(desc(number_of_flights)) %>%
-  filter(row_number() == 1)
+row <- flights %>%
+        select(origin, flight) %>% 
+        group_by(origin) %>%
+        summarise(number_of_flights = n()) %>%
+        arrange(desc(number_of_flights)) %>%
+        filter(row_number() == 1)
+
+airport_name <- airports %>%
+                  select(faa, name) %>%
+                  filter(faa == row$origin) %>%
+                  select(name)
+
+mutate(row, origin_full_name = name$name[1]) %>%
+  select(origin, origin_full_name, number_of_flights)
 ```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
 ```{r}
@@ -77,7 +87,8 @@ flights %>%
 ```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
 ```{r}
-# La compañía con más tiempo de vuelo es UA (United Airlines) con 12.237.728 minutos
+# Primero, vamos a calcular el tiempo de vuelo restando dep_time y arr_time. Sin embargo, dep_time y arr_time tienen time zone local de cada sitio, por lo que es preciso conocer esto antes.
+
 flights %>%
   select(carrier, air_time) %>%
   group_by(carrier) %>%
@@ -149,11 +160,11 @@ delay <- filter(delay, count > 20, dist < 2000)
 # average distance flown by a plane.
 ggplot(delay, aes(dist, delay)) +
   geom_point(aes(size = count), alpha = 1/2) +
-  labs(x="Distancia (millas)", y="Retraso (mins.)") +
+  labs(x = "Distancia (millas)", y = "Retraso (mins.)") +
   geom_smooth(method = 'gam') +
   scale_size_area() +
   ggtitle("Relación entre distancia y retrasos en los vuelos") +
-  scale_radius(name="Núm. vuelos")
+  scale_radius(name = "Núm. vuelos")
 ```
 
 A la vista del resultado, parece que exista una cierta correlación negativa, aunque
@@ -175,6 +186,7 @@ basados en los resultados obtenidos para elaborar la respuesta.
 
 ```{r, warning=FALSE}
 # Introduzca aquí el código para generar la respuesta
+  
 ```
 
 *[INTRODUCE AQUÍ LAS CONCLUSIONES]*
