@@ -71,7 +71,7 @@ airport_name <- airports %>%
                   filter(faa == row$origin) %>%
                   select(name)
 
-mutate(row, origin_full_name = name$name[1]) %>%
+mutate(row, origin_full_name = airport_name$name[1]) %>%
   select(origin, origin_full_name, number_of_flights)
 ```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
