@@ -41,8 +41,48 @@ library(dplyr)
 library(nycflights13)
 # Para la resolución de los ejercicios, vamos a importar el paquete magrittr y así poder utilizar el operador
 library(magrittr)
+
+library(stringr)
 ```
 
+En este chunk declararé funciones que he considerado necesarias para mejorar la legibilidad del código y evitar repetir código.
+```{r}
+get_full_airport_name <- function(abbreviation) {
+  airport_name <- airports %>%
+                    select(faa, name) %>%
+                    filter(faa == row$origin) %>%
+                    select(name)
+
+  return(airport_name$name[1])
+}
+
+time_to_gmt <- function(location, time, year, month, day) {
+  tz <- airports %>%
+          select(faa, tz) %>%
+          filter(faa == location) %>%
+          select(tz)
+
+  groups <- str_match_all(time, '(\\d{1,2})(\\d{2})')
+  
+  hour <- groups[[1]][2]
+  
+  minutes <- groups[[1]][3]
+  
+  right_time_format <- paste(hour, minutes, sep=':')
+  
+  date <- paste(year, month, day, sep = '-')
+  
+  as_posixct <- as.POSIXct(paste(right_time_format, date), format = '%H:%M %Y-%m-%d')
+  
+  gmt_time <- as_posixct + as.numeric(tz) * 3600
+  
+  return(gmt_time)
+}
+
+times_diff <- function(time1, time2) {
+  return(as.numeric(time1) - as.numeric(time2))
+}
+```
 ## Ejercicio 1 (*30 puntos*)
 
 Utiliza las funciones incluidas en el paquete `dplyr`, para responder a las siguientes preguntas:
@@ -59,20 +99,14 @@ flights %>%
 b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el año?
 ```{r}
 # El aeropuesto con mayor número de salidas de vuelos en todo el año es el correspondiente a las siglas EWR (Newark Liberty International Airport), con 120.835 vuelos en el año 2013
-row <- flights %>%
-        select(origin, flight) %>% 
-        group_by(origin) %>%
-        summarise(number_of_flights = n()) %>%
-        arrange(desc(number_of_flights)) %>%
-        filter(row_number() == 1)
-
-airport_name <- airports %>%
-                  select(faa, name) %>%
-                  filter(faa == row$origin) %>%
-                  select(name)
-
-mutate(row, origin_full_name = airport_name$name[1]) %>%
-  select(origin, origin_full_name, number_of_flights)
+flights %>%
+  select(origin, flight) %>% 
+  group_by(origin) %>%
+  summarise(number_of_flights = n()) %>%
+  arrange(desc(number_of_flights)) %>%
+  filter(row_number() == 1) %>%
+  mutate(origin_full_name = get_full_airport_name(row$origin[1])) %>%
+  select(origin, origin_full_name, number_of_flights) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
 ```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
 ```{r}
@@ -87,14 +121,8 @@ flights %>%
 ```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
 ```{r}
-# Primero, vamos a calcular el tiempo de vuelo restando dep_time y arr_time. Sin embargo, dep_time y arr_time tienen time zone local de cada sitio, por lo que es preciso conocer esto antes.
+# Primero, vamos a obtener el tiempo de vuelo calculando la diferencia de tiempo entre arr_time y dep_time. Sin embargo, dep_time y arr_time tienen time zone local de su respectivo aeropuerto, por lo que es preciso tener en cuenta esto antes.
 
-flights %>%
-  select(carrier, air_time) %>%
-  group_by(carrier) %>%
-  summarise(total_air_time = sum(air_time, na.rm = TRUE)) %>%
-  arrange(desc(total_air_time)) %>%
-  filter(row_number() == 1)  
 ```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
