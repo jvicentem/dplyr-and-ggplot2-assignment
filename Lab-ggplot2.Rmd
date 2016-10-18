@@ -2,8 +2,10 @@
 title: "Ejercicio-ggplot2-dplyr"
 author: "Felipe Ortega, Isaac Martín"
 date: "7 de octubre de 2016"
-output: pdf_document
+output: html_document
 ---
+
+# NOTA: si tenemos que filtrar datos por aquellos que no tenemos NA, probar a filtrar por columnas, todos, etc. y ver lo que pasa
 
 ## Introducción
 El paquete `nycflights13`, disponible en CRAN, contiene datos sobre 336.776 vuelos
@@ -37,18 +39,196 @@ de todos los ejercicios**.
 library(ggplot2)
 library(dplyr)
 library(nycflights13)
+# Para la resolución de los ejercicios, vamos a importar el paquete magrittr y así poder utilizar el operador
+library(magrittr)
+
+library(stringr)
 ```
 
+En este chunk declararé funciones que he considerado necesarias para mejorar la legibilidad del código y evitar repetir código.
+```{r}
+get_full_airport_name <- function(abbreviation) {
+  airport_name <- airports %>%
+                    select(faa, name) %>%
+                    filter(faa == row$origin) %>%
+                    select(name)
+
+  return(airport_name$name[1])
+}
+```
 ## Ejercicio 1 (*30 puntos*)
 
 Utiliza las funciones incluidas en el paquete `dplyr`, para responder a las siguientes preguntas:
 
 a) ¿Cuantos vuelos se realizan en total cada mes?
+
+```{r}
+# A continuación se encuentra el código cuya salida es un data frame con una columna llamada "month" donde se encuentran los meses representados por números y otra columna llamada "number_of_flights" que contiene el número de vuelos por cada mes
+flights %>% 
+  select(month, flight) %>% 
+  group_by(month) %>% 
+  summarise(number_of_flights = n())
+```
 b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el año?
+```{r}
+# El aeropuerto con mayor número de salidas de vuelos en todo el año es el correspondiente a las siglas EWR (Newark Liberty International Airport), con 120.835 vuelos en el año 2013
+flights %>%
+  select(origin, flight) %>% 
+  group_by(origin) %>%
+  summarise(number_of_flights = n()) %>%
+  arrange(desc(number_of_flights)) %>%
+  filter(row_number() == 1) %>%
+  mutate(origin_full_name = get_full_airport_name(row$origin[1])) %>%
+  select(origin, origin_full_name, number_of_flights) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
+```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
+```{r}
+# La compañía con mayor número de salidas de vuelos en los meses de verano es UA (United Airlines), con 19.859 vuelos
+flights %>%
+  select(carrier, month, flight) %>%
+  group_by(carrier) %>%
+  filter(month >= 6 & month <= 9) %>%
+  summarise(number_of_flights = n()) %>%
+  arrange(desc(number_of_flights)) %>%
+  filter(row_number() == 1)  
+```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
+```{r}
+# La compañía con más minutos de vuelo a lo largo del año es UA, con 8975080 minutos (149.584 horas y 40 minutos) 
+
+to_posixct <- function(time, year, month, day) {
+  groups <- str_match_all(time, '(\\d{0,2})(\\d{2})')
+  
+  hour <- groups[[1]][2]
+  
+  if(is.na(hour) | hour == '') {
+    hour = '00'
+  }
+  
+  minutes <- groups[[1]][3]
+  
+  right_time_format <- paste(hour, minutes, sep=':')
+  
+  date <- paste(year, month, day, sep = '-')
+  
+  as_posixct <- as.POSIXct(paste(right_time_format, date), format = '%H:%M %Y-%m-%d')
+  
+  return(as_posixct)
+}
+
+times_diff <- function(time_after, time_before) {
+  if(!is.na(time_after) & !is.na(time_before)) {
+    epoch1 <- as.numeric(time_after)
+    epoch2 <- as.numeric(time_before)
+    
+    if (epoch2 > epoch1) {
+      epoch1 <- epoch1 + 24 * 3600
+    }
+    
+    return(epoch1 - epoch2)    
+  } else {
+    return(NA)
+  }
+}
+
+#Como uso el campo actual_flight_time en otros apartados, lo dejo aquí para modificar la tabla y así no tener que realizar esos cálculos de nuevo
+flights <- flights %>%
+             rowwise() %>%
+             mutate(actual_flight_time = times_diff(to_posixct(arr_time, year, month, day), to_posixct(dep_time, year, month, day)) / 60) %>%
+             inner_join(flights, .)
+
+flights %>%
+  select(carrier, actual_flight_time) %>%
+  filter(!is.na(actual_flight_time)) %>%
+  group_by(carrier) %>%
+  mutate(total_time = sum(actual_flight_time)) %>%
+  select(carrier, total_time) %>%
+  arrange(desc(total_time)) %>%
+  head(1)
+```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
+```{r}
+# La compañía aérea con mayores retrasos de salida es aquella con las siglas EV, acumulando un total de 1.024.829 minutos de retraso
+flights %>%
+  select(carrier, dep_delay) %>%
+  group_by(carrier) %>%
+  summarise(total_dep_delay = sum(dep_delay, na.rm = TRUE)) %>%
+  arrange(desc(total_dep_delay)) %>%
+  filter(row_number() == 1)  
+
+# A medida que los vuelos son más largos, se producen menos retrasos y más cortos. # Sin embargo, en los vuelos más cortos es donde se producen los retrasos más duraderos.
+#
+# Hay que tener en cuenta que se tienen menos observaciones de viajes largos que de cortos. 
+#
+# En el histograma de más abajo se ve que hay picos de datos en vuelos de 170 minutos, 70 y 110. Cuando los vuelos son de 70 y 110 (o cercanos a estos valores), hay mayor retraso que en los vuelos de 170 (o cercanos a este valor), y es que hay más valores de 170 minutos (o cercanos a este valor) que de 70 y 110. 
+# Por lo tanto, podemos decir que para estos valores no hay problema en que haya menos observaciones.
+# Lamentablemente, no podemos decir lo mismo de valores mayores de 170 minutos (o cercanos a este valor) en los que la función de distribución de probabilidad muestra que hay una disminución pronunciada en las observaciones.
+
+
+
+# El coeficiente de correlación entre las variables es de r = -0.003853311, por lo que no hay una relación fuerte entre ellas
+cor(flights$dep_delay, flights$actual_flight_time, use="complete") # Se utiliza use="complete" para no tener encuenta observaciones con valores faltantes
+# Por otro lado, vemos que el coeficiente de Spearman es de r = 0.07894596
+cor(flights$dep_delay, flights$actual_flight_time, use="complete", method = "spearman")
+
+# Histogram actual_flight_time
+flights %>%
+  select(actual_flight_time) %>%
+  mutate(count = n()) %>%  
+  ggplot(aes(x=actual_flight_time)) +
+  geom_histogram(aes(y=..density..), binwidth=10, colour="black", fill="white") +
+  geom_density(alpha=.2, fill="#FF6666") +  
+  xlim(0, 600) 
+
+# Scatter plot
+flights %>%
+  select(actual_flight_time, dep_delay) %>%
+  mutate(count = n()) %>%
+  ggplot(aes(actual_flight_time, dep_delay)) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  labs(x="Tiempo de vuelo (min)", y="Retraso (min)") +
+  geom_smooth(method = 'gam') +
+  scale_size_area() +
+  ggtitle("Relación entre tiempo de vuelo y retrasos en los vuelos") +
+  xlim(0, 600) + 
+  scale_radius(name="Núm. vuelos")
+
+# Scatter plot con colour division
+flights %>%
+  select(actual_flight_time, dep_delay) %>%
+  mutate(count = n(), ratio = dep_delay / actual_flight_time) %>%
+  ggplot(aes(actual_flight_time, dep_delay)) +
+  geom_point(aes(size = count, colour = ratio), alpha = 0.25
+             ) +
+  labs(x="Tiempo de vuelo (min)", y="Retraso (min)") +
+  geom_smooth(method = 'gam') +
+  scale_size_area() +
+  scale_radius(name="Núm. vuelos") +
+  scale_colour_gradient2(high = "red", mid="green", space = "Lab") +
+  xlim(0, 600) + 
+  ggtitle("Relación entre tiempo de vuelo y retrasos en los vuelos. Colour = ratio") 
+
+# Line plot
+flights %>%
+  select(actual_flight_time, dep_delay) %>%
+  mutate(ratio = dep_delay/actual_flight_time) %>%
+  ggplot(aes(actual_flight_time, ratio, colour=ratio)) +
+  geom_line() +
+  labs(x="Tiempo de vuelo (min)", y="dep_delay/actual_flight_time (min)") +
+  xlim(0, 600) +
+  ggtitle("Relación entre tiempo de vuelo y ratio retraso/tiempo de vuelo") 
+
+# Diagrama de azulejos
+flights %>%
+  select(actual_flight_time, dep_delay) %>%
+  ggplot(aes(x = actual_flight_time, y = dep_delay, fill = dep_delay / actual_flight_time)) +
+  geom_tile() + 
+  scale_fill_gradient2(high = "red", mid = "blue") +
+  labs(x="Tiempo de vuelo (min)", y="Retraso (min)") +
+  xlim(0, 600) + 
+  ggtitle("Relación entre tiempo de vuelo y retrasos en los vuelos. Colour = ratio") 
+```
 
 ```{r ejercicio-1, warning=FALSE}
 # Introduce aquí el código para generar la respuesta
@@ -73,11 +253,11 @@ delay <- filter(delay, count > 20, dist < 2000)
 # average distance flown by a plane.
 ggplot(delay, aes(dist, delay)) +
   geom_point(aes(size = count), alpha = 1/2) +
-  labs(x="Distancia (millas)", y="Retraso (mins.)") +
+  labs(x = "Distancia (millas)", y = "Retraso (mins.)") +
   geom_smooth(method = 'gam') +
   scale_size_area() +
   ggtitle("Relación entre distancia y retrasos en los vuelos") +
-  scale_radius(name="Núm. vuelos")
+  scale_radius(name = "Núm. vuelos")
 ```
 
 A la vista del resultado, parece que exista una cierta correlación negativa, aunque
@@ -99,6 +279,7 @@ basados en los resultados obtenidos para elaborar la respuesta.
 
 ```{r, warning=FALSE}
 # Introduzca aquí el código para generar la respuesta
+  
 ```
 
 *[INTRODUCE AQUÍ LAS CONCLUSIONES]*
@@ -134,3 +315,6 @@ aeropuerto de Newark (código 'EWR'). ¿Se observan diferencias notables?
 ```
 
 *[INTRODUCE AQUÍ LAS CONCLUSIONES]*
+
+## Notas finales
+Para la realización de esta práctica se ha utilizado el IDE RStudio, además de utilizar la herramienta de control de versiones Git, siempre intentando seguir las pautas *git-flow*. Esta práctica se encuentra en el siguiente repositorio de Github: [https://github.com/jvicentem/dplyr-and-ggplot2-assignment](https://github.com/jvicentem/dplyr-and-ggplot2-assignment)
