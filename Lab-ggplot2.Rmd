@@ -47,13 +47,11 @@ library(stringr)
 
 En este chunk declararé funciones que he considerado necesarias para mejorar la legibilidad del código y evitar repetir código.
 ```{r}
-get_full_airport_name <- function(abbreviation) {
-  airport_name <- airports %>%
-                    select(faa, name) %>%
-                    filter(faa == row$origin) %>%
-                    select(name)
-
-  return(airport_name$name[1])
+add_full_carrier_name <- function(df) {
+  return(
+    df %>%
+      left_join(airlines)
+  )
 }
 ```
 ## Ejercicio 1 (*30 puntos*)
@@ -72,14 +70,25 @@ flights %>%
 b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el año?
 ```{r}
 # El aeropuerto con mayor número de salidas de vuelos en todo el año es el correspondiente a las siglas EWR (Newark Liberty International Airport), con 120.835 vuelos en el año 2013
+
+add_full_airport_name <- function(df) {
+  airports_df <- airports %>%
+                  select(faa, name)
+  
+  return(
+    df %>%
+      left_join(airports_df, by = c("origin"="faa")) 
+  )
+}
+
 flights %>%
   select(origin, flight) %>% 
   group_by(origin) %>%
   summarise(number_of_flights = n()) %>%
   arrange(desc(number_of_flights)) %>%
-  filter(row_number() == 1) #%>%
-  #mutate(origin_full_name = get_full_airport_name(row$origin[1])) %>%
-  #select(origin, origin_full_name, number_of_flights) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
+  filter(row_number() == 1) %>%
+  add_full_airport_name() %>%
+  select(origin, full_name = name, number_of_flights) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
 ```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
 ```{r}
@@ -90,7 +99,9 @@ flights %>%
   filter(month >= 6 & month <= 9) %>%
   summarise(number_of_flights = n()) %>%
   arrange(desc(number_of_flights)) %>%
-  filter(row_number() == 1)  
+  filter(row_number() == 1) %>%
+  add_full_carrier_name() %>%
+  select(carrier, full_carrier_name = name, number_of_flights)
 ```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
 ```{r}
@@ -144,18 +155,22 @@ flights %>%
   mutate(total_time = sum(actual_flight_time)) %>%
   select(carrier, total_time) %>%
   arrange(desc(total_time)) %>%
-  head(1)
+  head(1) %>%
+  add_full_carrier_name() %>%
+  select(carrier, full_carrier_name = name, total_time)
 ```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
 ```{r}
-# La compañía aérea con mayores retrasos de salida es aquella con las siglas EV, acumulando un total de 1.024.829 minutos de retraso
+# La compañía aérea con mayores retrasos de salida es aquella con las siglas EV (ExpressJet Airlines Inc.), acumulando un total de 1.024.829 minutos de retraso
 flights %>%
   select(carrier, dep_delay) %>%
   group_by(carrier) %>%
   summarise(total_dep_delay = sum(dep_delay, na.rm = TRUE)) %>%
   arrange(desc(total_dep_delay)) %>%
-  filter(row_number() == 1)  
+  filter(row_number() == 1) %>%
+  add_full_carrier_name() %>%
+  select(carrier, full_carrier_name = name, total_dep_delay)
 
 # A medida que los vuelos son más largos, se producen menos retrasos y más cortos. # Sin embargo, en los vuelos más cortos es donde se producen los retrasos más duraderos.
 #
