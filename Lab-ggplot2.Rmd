@@ -77,9 +77,9 @@ flights %>%
   group_by(origin) %>%
   summarise(number_of_flights = n()) %>%
   arrange(desc(number_of_flights)) %>%
-  filter(row_number() == 1) %>%
-  mutate(origin_full_name = get_full_airport_name(row$origin[1])) %>%
-  select(origin, origin_full_name, number_of_flights) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
+  filter(row_number() == 1) #%>%
+  #mutate(origin_full_name = get_full_airport_name(row$origin[1])) %>%
+  #select(origin, origin_full_name, number_of_flights) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
 ```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
 ```{r}
@@ -94,7 +94,7 @@ flights %>%
 ```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
 ```{r}
-# La compañía con más minutos de vuelo a lo largo del año es UA, con 8975080 minutos (149.584 horas y 40 minutos) 
+# La compañía con más minutos de vuelo a lo largo del año es UA, con 8.975.080 minutos (149.584 horas y 40 minutos) 
 
 to_posixct <- function(time, year, month, day) {
   groups <- str_match_all(time, '(\\d{0,2})(\\d{2})')
@@ -278,7 +278,35 @@ nombres del mes.
 basados en los resultados obtenidos para elaborar la respuesta.
 
 ```{r, warning=FALSE}
-# Introduzca aquí el código para generar la respuesta
+# Durante los meses de abril, junio, julio, y diciembre se producen los mayores retrasos. Es destacable que en los meses de julio y agosto los mayores retrasos surgen en los viajes con mayor distancia.
+# Esto último contrasta con el resto de meses, cuyo retraso suele ser mayor en los viajes con menor distancia.
+# En los meses de septiembre, octubre y noviembre es cuando se producen los menores retrasos.
+
+dist_and_delay <- flights %>%
+                    select(tailnum, distance, arr_delay, month) %>%
+                    mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE', labels = month.abb)) %>%
+                    group_by(month, tailnum) %>%
+                    summarise(count = n (), dist = mean(distance, na.rm = TRUE), delay = mean(arr_delay, na.rm = TRUE)) %>%
+                    filter(count > 20, dist < 2000) 
+
+dist_and_delay %>%
+  ggplot(aes(dist, delay)) +
+  facet_wrap(~ month) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  labs(x = "Distancia (millas)", y = "Retraso (mins.)") +
+  geom_smooth(method = 'gam') +
+  scale_size_area() +
+  ggtitle("Relación entre distancia y retrasos en los vuelos por mes") +
+  scale_radius(name = "Núm. vuelos")
+
+# Como se puede apreciar, es en los meses de julio, junio, diciembre y abril (por este orden) donde, de media, los retrasos son mayores.
+flights %>%
+  select(tailnum, distance, arr_delay, month) %>%
+  mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE', labels = month.abb)) %>%
+  group_by(month) %>%
+  summarise(count = n (), dist = mean(distance, na.rm = TRUE), delay = mean(arr_delay, na.rm = TRUE)) %>%
+  filter(count > 20, dist < 2000) %>%
+  arrange(desc(delay))
   
 ```
 
