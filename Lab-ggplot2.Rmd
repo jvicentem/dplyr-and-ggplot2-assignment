@@ -44,7 +44,7 @@ library(stringr)
 ```
 
 En este chunk declararé funciones que he considerado necesarias para mejorar la legibilidad del código y evitar repetir código.
-```{r}
+```{r, message=FALSE}
 add_full_carrier_name <- function(df) {
   return(
     df %>%
@@ -58,15 +58,15 @@ Utiliza las funciones incluidas en el paquete `dplyr`, para responder a las sigu
 
 a) ¿Cuantos vuelos se realizan en total cada mes?
 
-```{r}
-# A continuación se encuentra el código cuya salida es un data frame con una columna llamada "month" donde se encuentran los meses representados por números y otra columna llamada "number_of_flights" que contiene el número de vuelos por cada mes
+```{r, message=FALSE}
 flights %>% 
   select(month, flight) %>% 
+  mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE')) %>%
   group_by(month) %>% 
   summarise(number_of_flights = n())
 ```
 b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el año?
-```{r}
+```{r, message=FALSE}
 # El aeropuerto con mayor número de salidas de vuelos en todo el año es el correspondiente a las siglas EWR (Newark Liberty International Airport), con 120.835 vuelos en el año 2013
 
 add_full_airport_name <- function(df) {
@@ -89,7 +89,7 @@ flights %>%
   select(origin, full_name = name, number_of_flights) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
 ```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
-```{r}
+```{r, message=FALSE}
 # La compañía con mayor número de salidas de vuelos en los meses de verano es UA (United Airlines), con 19.859 vuelos
 flights %>%
   select(carrier, month, flight) %>%
@@ -102,7 +102,7 @@ flights %>%
   select(carrier, full_carrier_name = name, number_of_flights)
 ```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
-```{r}
+```{r, message=FALSE}
 # La compañía con más minutos de vuelo a lo largo del año es UA, con 8.975.080 minutos (149.584 horas y 40 minutos) 
 
 to_posixct <- function(time, year, month, day) {
@@ -159,7 +159,7 @@ flights %>%
 ```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
-```{r}
+```{r, message=FALSE}
 # La compañía aérea con mayores retrasos de salida es aquella con las siglas EV (ExpressJet Airlines Inc.), acumulando un total de 1.024.829 minutos de retraso
 flights %>%
   select(carrier, dep_delay) %>%
@@ -170,6 +170,14 @@ flights %>%
   add_full_carrier_name() %>%
   select(carrier, full_carrier_name = name, total_dep_delay)
 
+
+# El coeficiente de correlación entre las variables es de r = -0.003853311
+cor(flights$dep_delay, flights$actual_flight_time, use="complete") # Se utiliza use="complete" para no tener encuenta observaciones con valores faltantes
+# Por otro lado, vemos que el coeficiente de Spearman es de r = 0.07894596
+cor(flights$dep_delay, flights$actual_flight_time, use="complete", method = "spearman")
+
+# Los coeficientes de correlación son cercanos a 0, por lo que podríamos pensar que entre ambas variables la relación es inexistente. A pesar de esto, vamos a estudiar una posible relación entre estas dos variables ya que, dependiendo del área del conocimiento en el que estemos trabajando, los valores de los coeficientes de relación pueden ser significativos o no aunque estos sean muy próximos a cero.
+
 # A medida que los vuelos son más largos, se producen menos retrasos y más cortos. # Sin embargo, en los vuelos más cortos es donde se producen los retrasos más duraderos.
 #
 # Hay que tener en cuenta que se tienen menos observaciones de viajes largos que de cortos. 
@@ -177,13 +185,6 @@ flights %>%
 # En el histograma de más abajo se ve que hay picos de datos en vuelos de 170 minutos, 70 y 110. Cuando los vuelos son de 70 y 110 (o cercanos a estos valores), hay mayor retraso que en los vuelos de 170 (o cercanos a este valor), y es que hay más valores de 170 minutos (o cercanos a este valor) que de 70 y 110. 
 # Por lo tanto, podemos decir que para estos valores no hay problema en que haya menos observaciones.
 # Lamentablemente, no podemos decir lo mismo de valores mayores de 170 minutos (o cercanos a este valor) en los que la función de distribución de probabilidad muestra que hay una disminución pronunciada en las observaciones.
-
-
-
-# El coeficiente de correlación entre las variables es de r = -0.003853311, por lo que no hay una relación fuerte entre ellas
-cor(flights$dep_delay, flights$actual_flight_time, use="complete") # Se utiliza use="complete" para no tener encuenta observaciones con valores faltantes
-# Por otro lado, vemos que el coeficiente de Spearman es de r = 0.07894596
-cor(flights$dep_delay, flights$actual_flight_time, use="complete", method = "spearman")
 
 # Histogram actual_flight_time
 flights %>%
@@ -241,11 +242,6 @@ flights %>%
   labs(x="Tiempo de vuelo (min)", y="Retraso (min)") +
   xlim(0, 600) + 
   ggtitle("Relación entre tiempo de vuelo y retrasos en los vuelos. Colour = ratio") 
-```
-
-```{r ejercicio-1, warning=FALSE}
-# Introduce aquí el código para generar la respuesta
-# Puedes añadir más chunks si es necesario
 ```
 
 ## Ejercicio 2 (*30 puntos*)
