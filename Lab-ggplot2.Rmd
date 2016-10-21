@@ -5,8 +5,6 @@ date: "7 de octubre de 2016"
 output: html_document
 ---
 
-# NOTA: si tenemos que filtrar datos por aquellos que no tenemos NA, probar a filtrar por columnas, todos, etc. y ver lo que pasa
-
 ## Introducción
 El paquete `nycflights13`, disponible en CRAN, contiene datos sobre 336.776 vuelos
 que despegaron de alguno de los tres aeropuertos que dan servicio a la ciudad
