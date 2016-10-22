@@ -331,16 +331,24 @@ los vuelos domésticos, imponiendo como condición de filtrado de datos:
 ¿Qué conclusiones puedes extraer a la vista de estos gráficos?
 
 ```{r}
-# Introduzca aquí el código para generar la respuesta
+flights %>%
+  select(origin, dep_delay, distance, month, tailnum) %>%
+  filter(origin == 'JFK', distance < 1000) %>%
+  mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE')) %>%
+  group_by(month, tailnum) %>%
+  summarise(count = n (), dist = mean(distance, na.rm = TRUE), delay = mean(dep_delay, na.rm = TRUE)) %>%
+  ggplot(aes(dist, delay)) +
+  facet_wrap(~ month) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  labs(x = "Distancia (millas)", y = "Retraso (mins.)") +
+  geom_smooth(method = 'gam') +
+  scale_size_area() +
+  ggtitle("Relación entre distancia y retrasos en los vuelos por mes desde el aeropuerto JFK") +
+  scale_radius(name = "Núm. vuelos") +
+  ylim(0, 250) # Limitamos el eje de ordenadas para poder apreciar mejor la mayoría de observaciones y determinar su tendencia
 ```
 
-*[INTRODUCE AQUÍ LAS CONCLUSIONES]*
-
-```{r}
-# Introduzca aquí el código para generar la respuesta
-```
-
-*[INTRODUCE AQUÍ LAS CONCLUSIONES]*
+*[En todos los meses menos en el de noviembre, los retrasos son menores a medida que los viajes tienen más distancia. Además, se aprecian cuatro grupos de viajes: Uno de 187 millas (BOS, General Edward Lawrence Logan Intl), otro de 541 millas (CLT,Charlotte Douglas Intl), otro de 760 millas (ATL, Hartsfield Jackson Atlanta Intl) y otro de 944 millas (MCO, Orlando Intl). Los cuatro grupos de viajes pueden tener una explicación común: viajes de negocio. A Boston porque alberga una gran cantidad de empresas y centros de educación superior, de hecho Boston es la sexta ciudad con la economía más grande en los Estados Unidos. A Charlotte ya que esta ciudad es la segunda ciudad de los Estados Unidos tras Nueva York con mayor número de sedes de bancos. A Atlanta porque tiene la octava economía más fuerte de los E.E.U.U., ser la tercera ciudad que alberga mayor número de sedes de compañías que pertenecen al Fortune 500 y además el 75% de las empresas del Fortune 1000 están en esta ciudad. Por último Orlando, en la cual se asientan muchas empresas que se dedican a la alta tecnología y en la que el turismo supone una fuente de ingresos muy importante para esta ciudad porque en Orlando se localizan parques temáticos como el Disney Land Resort y los Universal Studios.]*
 
 ## Ejercicio 4 (*20 puntos*)
 Utilizando boxplots (`geom_boxplot`), representar gráficamente una comparativa de los 
