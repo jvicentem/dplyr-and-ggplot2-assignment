@@ -355,11 +355,100 @@ Utilizando boxplots (`geom_boxplot`), representar gráficamente una comparativa 
 retrasos de salida entre las distintas compañías aéreas, en el mes de diciembre, para el 
 aeropuerto de Newark (código 'EWR'). ¿Se observan diferencias notables?
 
-```{r}
-# Introduzca aquí el código para generar la respuesta
+```{r, message=FALSE}
+flights %>%
+  select(carrier, month, dep_delay, origin) %>%
+  mutate(carrier = factor(carrier, levels = carrier)) %>%
+  filter(origin == 'EWR', month == 12) %>%
+  select(carrier, dep_delay) %>%
+  group_by(carrier) %>%
+  ggplot(aes(carrier, dep_delay)) +
+  geom_boxplot(aes(fill = carrier)) +
+  scale_y_continuous(breaks = round(seq(min(-20), max(500), by = 20), 1), limits = c(-20, 440)) # He limitado el número de valores a mostrar para poder estudiar mejor las diferencias entre compañías centrándome donde se encuentran la mayoría de las observaciones
+
+flights %>%
+  select(carrier, month, dep_delay, origin) %>%
+  add_full_carrier_name() %>%
+  mutate(carrier = factor(carrier, levels = carrier)) %>%
+  filter(origin == 'EWR', month == 12) %>%
+  select(carrier, full_carrier_name = name, dep_delay) %>%
+  group_by(carrier, full_carrier_name) %>%
+  summarise(delay = median(dep_delay, na.rm = TRUE)) %>%
+  arrange(desc(delay)) 
+
 ```
 
-*[INTRODUCE AQUÍ LAS CONCLUSIONES]*
+*Para intentar explicar mejor los motivos de los retrasos, he calculado los coeficientes de correlación entre el retraso de salida (dep_delay) y todas las variables de la tabla weather. El resultado es que las cuatro variables con más coeficiente de correlación con la variable dep_delay son visib (visibilidad), dewp (punto de rocío), temp (temperatura) y humid (humedad).*
+
+```{r, message=FALSE}
+cor(aux$dep_delay, aux$visib, use = "complete")
+
+cor(aux$dep_delay, aux$dewp, use = "complete")
+
+cor(aux$dep_delay, aux$temp, use = "complete")
+
+cor(aux$dep_delay, aux$humid, use = "complete")
+
+cor(aux$dep_delay, aux$precip, use = "complete")
+
+cor(aux$dep_delay, aux$pressure, use = "complete")
+
+cor(aux$dep_delay, aux$wind_dir, use = "complete")
+
+cor(aux$dep_delay, aux$wind_speed, use = "complete")
+
+cor(aux$dep_delay, aux$wind_gust, use = "complete")
+```
+
+*A continuación, he realizado 4 scatter plots para intentar apreciar mejor la relación entre los retrasos y los parámetros meteorológicos para cada compañía.*
+
+```{r, message=FALSE}
+common_block <- flights %>%
+                    select(origin, year, month, day, hour, carrier, month, dep_delay, actual_flight_time, tailnum) %>%
+                    left_join(weather) %>%
+                    filter(origin == 'EWR', month == 12) 
+
+common_block %>%
+  select(carrier, dep_delay, visib) %>%
+  group_by(carrier) %>%
+  ggplot(aes(visib, dep_delay)) +
+  facet_wrap(~ carrier) +
+  geom_point(alpha = 1/2) +
+  geom_smooth(method = 'gam') +
+  scale_y_continuous(breaks = round(seq(min(-50), max(500), by = 50), 1), limits = c(-50, 500)) 
+
+common_block %>%
+  select(carrier, dep_delay, dewp) %>%
+  group_by(carrier) %>%
+  ggplot(aes(dewp, dep_delay)) +
+  facet_wrap(~ carrier) +
+  geom_point(alpha = 1/2) +
+  geom_smooth(method = 'gam') +
+  scale_y_continuous(breaks = round(seq(min(-50), max(500), by = 50), 1), limits = c(-50, 500)) 
+
+common_block %>%
+  select(carrier, dep_delay, temp) %>%
+  group_by(carrier) %>%
+  ggplot(aes(temp, dep_delay)) +
+  facet_wrap(~ carrier) +
+  geom_point(alpha = 1/2) +
+  geom_smooth(method = 'gam') +
+  scale_y_continuous(breaks = round(seq(min(-50), max(500), by = 50), 1), limits = c(-50, 500)) 
+
+common_block %>%
+  select(carrier, dep_delay, humid) %>%
+  group_by(carrier) %>%
+  ggplot(aes(humid, dep_delay)) +
+  facet_wrap(~ carrier) +
+  geom_point(alpha = 1/2) +
+  geom_smooth(method = 'gam') +
+  scale_y_continuous(breaks = round(seq(min(-50), max(500), by = 50), 1), limits = c(-50, 500)) 
+```
+
+*El resultado es que, mientras en unas compañías los vuelos a penas se ven afectados por estos elementos del tiempo, las compañías que presentan más retraso se ven muy afectadas por ellos.*
+
+*Desafortunadamente, no tenemos datos suficientes como para determinar el motivo de porqué en algunas compañías estos parámetros producen más retrasos que en otras.*
+
 
 ## Notas finales
 Para la realización de esta práctica se ha utilizado el IDE RStudio, además de utilizar la herramienta de control de versiones Git, siempre intentando seguir las pautas *git-flow*. Esta práctica se encuentra en el siguiente repositorio de Github: [https://github.com/jvicentem/dplyr-and-ggplot2-assignment](https://github.com/jvicentem/dplyr-and-ggplot2-assignment)
