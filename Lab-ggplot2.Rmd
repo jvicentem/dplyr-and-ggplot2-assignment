@@ -380,6 +380,8 @@ flights %>%
 
 *Para intentar explicar mejor los motivos de los retrasos, he calculado los coeficientes de correlación entre el retraso de salida (dep_delay) y todas las variables de la tabla weather. El resultado es que las cuatro variables con más coeficiente de correlación con la variable dep_delay son visib (visibilidad), dewp (punto de rocío), temp (temperatura) y humid (humedad).*
 
+*El motivo por el que he decidido intentar sacar alguna conclusión mediante la tala weather ha sido gracias a esta entrada del sitio Web de la Administración Federal de Aviación: [https://www.faa.gov/nextgen/programs/weather/faq/](https://www.faa.gov/nextgen/programs/weather/faq/)*
+
 ```{r, message=FALSE}
 cor(aux$dep_delay, aux$visib, use = "complete")
 
