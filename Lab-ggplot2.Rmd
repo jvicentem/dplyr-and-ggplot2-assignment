@@ -102,13 +102,15 @@ flights %>%
   arrange(desc(number_of_flights)) %>%
   head(1) %>%
   add_full_carrier_name() %>%
-  select(carrier, full_carrier_name = name, number_of_flights)
+  select(carrier, full_carrier_name = name, number_of_flights) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
 ```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
 
 *La compañía con más minutos de vuelo a lo largo del año es UA, con 8.975.080 minutos (149.584 horas y 40 minutos)*
 
 ```{r, message=FALSE}
+# He considerado que el tiempo de vuelo real es el tiempo de llegada menos el tiempo de salida
+
 to_posixct <- function(time, year, month, day) {
   groups <- str_match_all(time, '(\\d{0,2})(\\d{2})')
   
@@ -135,6 +137,7 @@ times_diff <- function(time_after, time_before) {
     epoch2 <- as.numeric(time_before)
     
     if (epoch2 > epoch1) {
+      # Ejemplo: las 02:00 menos las 23:00 -> hay que hacer esto para tener en cuenta que las 02:00 son del día siguiente
       epoch1 <- epoch1 + 24 * 3600
     }
     
@@ -159,7 +162,7 @@ flights %>%
   arrange(desc(total_time)) %>%
   head(1) %>%
   add_full_carrier_name() %>%
-  select(carrier, full_carrier_name = name, total_time)
+  select(carrier, full_carrier_name = name, total_time) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
 ```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
@@ -174,7 +177,7 @@ flights %>%
   arrange(desc(total_dep_delay)) %>%
   head(1) %>%
   add_full_carrier_name() %>%
-  select(carrier, full_carrier_name = name, total_dep_delay)
+  select(carrier, full_carrier_name = name, total_dep_delay) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
 ```
 
 *Los coeficientes de correlación son cercanos a 0, por lo que podríamos pensar que entre ambas variables la relación es inexistente. A pesar de esto, vamos a estudiar una posible relación entre estas dos variables ya que, dependiendo del área del conocimiento en el que estemos trabajando, los valores de los coeficientes de relación pueden ser significativos o no aunque estos sean muy próximos a cero.*
@@ -224,8 +227,7 @@ flights %>%
   select(actual_flight_time, dep_delay) %>%
   mutate(count = n(), ratio = dep_delay / actual_flight_time) %>%
   ggplot(aes(actual_flight_time, dep_delay)) +
-  geom_point(aes(size = count, colour = ratio), alpha = 0.25
-             ) +
+  geom_point(aes(size = count, colour = ratio), alpha = 0.25) +
   labs(x="Tiempo de vuelo (min)", y="Retraso (min)") +
   geom_smooth(method = 'gam') +
   scale_size_area() +
