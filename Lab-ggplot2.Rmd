@@ -70,8 +70,6 @@ b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el a�
 *El aeropuerto con mayor número de salidas de vuelos en todo el año es el correspondiente a las siglas EWR (Newark Liberty International Airport), con 120.835 vuelos.*
 
 ```{r, message=FALSE}
-
-
 add_full_airport_name <- function(df) {
   airports_df <- airports %>%
                   select(faa, name)
@@ -318,7 +316,7 @@ dist_and_delay %>%
   ggplot(aes(dist, delay)) +
   facet_wrap(~ month) +
   geom_point(aes(size = count), alpha = 1/2) +
-  labs(x = "Distancia (millas)", y = "Retraso (mins.)") +
+  labs(x = "Distancia (millas)", y = "Retraso (min)") +
   geom_smooth(method = 'gam') +
   scale_size_area() +
   ggtitle("Relación entre distancia y retrasos en los vuelos por mes") +
@@ -370,7 +368,7 @@ flights %>%
   ggplot(aes(dist, delay)) +
   facet_wrap(~ month) +
   geom_point(aes(size = count), alpha = 1/2) +
-  labs(x = "Distancia (millas)", y = "Retraso (mins.)") +
+  labs(x = "Distancia (millas)", y = "Retraso (min)") +
   geom_smooth(method = 'gam') +
   scale_size_area() +
   ggtitle("Relación entre distancia y retrasos en los vuelos por mes desde el aeropuerto JFK") +
@@ -398,6 +396,7 @@ flights %>%
   group_by(carrier) %>%
   ggplot(aes(carrier, dep_delay)) +
   geom_boxplot(aes(fill = carrier)) +
+  labs(y = "Retraso (min)")
   ggtitle("Comparativa de los retrasos de salida por compañía para el mes de diciembre en el aeropuerto de Newawrk") +
   scale_y_continuous(breaks = round(seq(min(-20), max(500), by = 20), 1), limits = c(-20, 440)) # He limitado el número de valores a mostrar para poder estudiar mejor las diferencias entre compañías centrándome donde se encuentran la mayoría de las observaciones
 
