@@ -505,5 +505,9 @@ common_block %>%
 *Desafortunadamente, no tenemos datos suficientes como para determinar el motivo de porqué en algunas compañías estos parámetros producen más retrasos que en otras.*
 
 
-## Notas finales
+## Notas finales y apreciaciones
 Para la realización de esta práctica se ha utilizado el IDE RStudio, además de utilizar la herramienta de control de versiones Git, siempre intentando seguir las pautas *git-flow*. Esta práctica se encuentra en el siguiente repositorio de Github: [https://github.com/jvicentem/dplyr-and-ggplot2-assignment](https://github.com/jvicentem/dplyr-and-ggplot2-assignment)
+
+En algunos ejercicios he intentado dar una explicación a las tendencias que se apreciaban en las gráficas, en algunas ocasiones buscando información en la Red.
+
+Esta práctica me ha servido para afianzar los conocimientos adquiridos sobre R a lo largo de las clases.
