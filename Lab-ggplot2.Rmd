@@ -331,8 +331,6 @@ flights %>%
   arrange(desc(delay))
 ```
 
-*[INTRODUCE AQUÍ LAS CONCLUSIONES]*
-
 ## Ejercicio 3 (*20 puntos*)
 
 Representar el retrasos de salida de los vuelos que parten  del aeropuerto JFK 
@@ -342,7 +340,26 @@ los vuelos domésticos, imponiendo como condición de filtrado de datos:
 
 ¿Qué conclusiones puedes extraer a la vista de estos gráficos?
 
-*En todos los meses menos en el de noviembre, los retrasos son menores a medida que los viajes tienen más distancia.*
+```{r, warning=FALSE}
+flights %>%
+  select(origin, dep_delay, distance, month, tailnum) %>%
+  filter(origin == 'JFK', distance < 1000) %>%
+  mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE')) %>%
+  group_by(month, tailnum) %>%
+  summarise(count = n (), dist = mean(distance, na.rm = TRUE), delay = mean(dep_delay, na.rm = TRUE)) %>%
+  ggplot(aes(dist, delay)) +
+  facet_wrap(~ month) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  labs(x = "Distancia (millas)", y = "Retraso (min)") +
+  geom_smooth(method = 'gam') +
+  scale_size_area() +
+  ggtitle("Relación entre distancia y retrasos en los vuelos por mes desde el aeropuerto JFK") +
+  scale_radius(name = "Núm. vuelos") +
+  scale_y_continuous(breaks = round(seq(min(-20), max(250), by = 10), 1), limits = c(-20, 250))
+  ylim(0, 250) # Limitamos el eje de ordenadas para poder apreciar mejor la mayoría de observaciones y determinar su tendencia
+```
+
+*En todos los meses menos en julio, agosto y septiembre los retrasos son menores a medida que los viajes tienen más distancia.*
 
 *Además, se aprecian cuatro grupos de viajes:*
 
@@ -360,21 +377,22 @@ los vuelos domésticos, imponiendo como condición de filtrado de datos:
 
 ```{r, warning=FALSE}
 flights %>%
-  select(origin, dep_delay, distance, month, tailnum) %>%
+  select(origin, distance, month, tailnum) %>%
   filter(origin == 'JFK', distance < 1000) %>%
   mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE')) %>%
   group_by(month, tailnum) %>%
-  summarise(count = n (), dist = mean(distance, na.rm = TRUE), delay = mean(dep_delay, na.rm = TRUE)) %>%
-  ggplot(aes(dist, delay)) +
-  facet_wrap(~ month) +
-  geom_point(aes(size = count), alpha = 1/2) +
-  labs(x = "Distancia (millas)", y = "Retraso (min)") +
-  geom_smooth(method = 'gam') +
-  scale_size_area() +
-  ggtitle("Relación entre distancia y retrasos en los vuelos por mes desde el aeropuerto JFK") +
-  scale_radius(name = "Núm. vuelos") +
-  ylim(0, 250) # Limitamos el eje de ordenadas para poder apreciar mejor la mayoría de observaciones y determinar su tendencia
+  summarise(dist = mean(distance, na.rm = TRUE)) %>%
+  filter(dist == 187 | dist == 541 | dist == 760 | dist == 944) %>%
+  mutate(destinations = factor(dist, levels = c(187, 541, 760, 944), labels = c('BOS', 'CLT', 'ATL', 'ORL'))) %>%
+  select(destinations, month) %>%
+  group_by(destinations, month) %>%
+  summarise(count = n()) %>%
+  ggplot(aes(month, count)) +
+  geom_line(aes(colour = destinations, group=destinations)) +
+  labs(y = "Vuelos") + 
+  ggtitle("Vuelos por destino en cada mes desde el aeropuerto JFK")
 ```
+*Es más, en el caso de Orlando es, de las cuatro ciudades nombradas, la que recibe más visitas en los meses de verano y es en esos meses cuando más vuelos tiene. Esto confirma que además de tener vuelos por negocios, muchos puden ser debidos a su interés turístico.*
 
 ## Ejercicio 4 (*20 puntos*)
 Utilizando boxplots (`geom_boxplot`), representar gráficamente una comparativa de los 
@@ -409,7 +427,6 @@ flights %>%
   group_by(carrier, full_carrier_name) %>%
   summarise(delay = median(dep_delay, na.rm = TRUE)) %>%
   arrange(desc(delay)) 
-
 ```
 
 *Para intentar explicar mejor los motivos de los retrasos, he calculado los coeficientes de correlación entre el retraso de salida (dep_delay) y todas las variables de la tabla weather. El resultado es que las cuatro variables con más coeficiente de correlación con la variable dep_delay son visib (visibilidad), dewp (punto de rocío), temp (temperatura) y humid (humedad).*
