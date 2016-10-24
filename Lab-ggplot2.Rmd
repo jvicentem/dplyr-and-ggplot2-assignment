@@ -87,7 +87,7 @@ flights %>%
   group_by(origin) %>%
   summarise(number_of_flights = n()) %>%
   arrange(desc(number_of_flights)) %>%
-  filter(row_number() == 1) %>%
+  head(1) %>%
   add_full_airport_name() %>%
   select(origin, full_name = name, number_of_flights) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
 ```
@@ -102,7 +102,7 @@ flights %>%
   filter(month >= 6 & month <= 9) %>%
   summarise(number_of_flights = n()) %>%
   arrange(desc(number_of_flights)) %>%
-  filter(row_number() == 1) %>%
+  head(1) %>%
   add_full_carrier_name() %>%
   select(carrier, full_carrier_name = name, number_of_flights)
 ```
@@ -174,7 +174,7 @@ flights %>%
   group_by(carrier) %>%
   summarise(total_dep_delay = sum(dep_delay, na.rm = TRUE)) %>%
   arrange(desc(total_dep_delay)) %>%
-  filter(row_number() == 1) %>%
+  head(1) %>%
   add_full_carrier_name() %>%
   select(carrier, full_carrier_name = name, total_dep_delay)
 ```
