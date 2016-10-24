@@ -37,7 +37,7 @@ de todos los ejercicios**.
 library(ggplot2)
 library(dplyr)
 library(nycflights13)
-# Para la resolución de los ejercicios, vamos a importar el paquete magrittr y así poder utilizar el operador
+# Para la resolución de los ejercicios, vamos a importar el paquete magrittr y así poder utilizar el operador %>%
 library(magrittr)
 
 library(stringr)
@@ -66,8 +66,11 @@ flights %>%
   summarise(number_of_flights = n())
 ```
 b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el año?
+
+*El aeropuerto con mayor número de salidas de vuelos en todo el año es el correspondiente a las siglas EWR (Newark Liberty International Airport), con 120.835 vuelos.*
+
 ```{r, message=FALSE}
-# El aeropuerto con mayor número de salidas de vuelos en todo el año es el correspondiente a las siglas EWR (Newark Liberty International Airport), con 120.835 vuelos en el año 2013
+
 
 add_full_airport_name <- function(df) {
   airports_df <- airports %>%
@@ -89,8 +92,10 @@ flights %>%
   select(origin, full_name = name, number_of_flights) # Realizo este select para mostrar las columnas ordenadas y que el nombre completo aparezca al lado de la abreviatura
 ```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
+
+*La compañía con mayor número de salidas de vuelos en los meses de verano es UA (United Airlines), con 19.859 vuelos.*
+
 ```{r, message=FALSE}
-# La compañía con mayor número de salidas de vuelos en los meses de verano es UA (United Airlines), con 19.859 vuelos
 flights %>%
   select(carrier, month, flight) %>%
   group_by(carrier) %>%
@@ -102,9 +107,10 @@ flights %>%
   select(carrier, full_carrier_name = name, number_of_flights)
 ```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
-```{r, message=FALSE}
-# La compañía con más minutos de vuelo a lo largo del año es UA, con 8.975.080 minutos (149.584 horas y 40 minutos) 
 
+*La compañía con más minutos de vuelo a lo largo del año es UA, con 8.975.080 minutos (149.584 horas y 40 minutos)*
+
+```{r, message=FALSE}
 to_posixct <- function(time, year, month, day) {
   groups <- str_match_all(time, '(\\d{0,2})(\\d{2})')
   
@@ -159,8 +165,10 @@ flights %>%
 ```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
+
+*La compañía aérea con mayores retrasos de salida es aquella con las siglas EV (ExpressJet Airlines Inc.), acumulando un total de 1.024.829 minutos de retraso*
+
 ```{r, message=FALSE}
-# La compañía aérea con mayores retrasos de salida es aquella con las siglas EV (ExpressJet Airlines Inc.), acumulando un total de 1.024.829 minutos de retraso
 flights %>%
   select(carrier, dep_delay) %>%
   group_by(carrier) %>%
@@ -169,23 +177,28 @@ flights %>%
   filter(row_number() == 1) %>%
   add_full_carrier_name() %>%
   select(carrier, full_carrier_name = name, total_dep_delay)
+```
 
+*Los coeficientes de correlación son cercanos a 0, por lo que podríamos pensar que entre ambas variables la relación es inexistente. A pesar de esto, vamos a estudiar una posible relación entre estas dos variables ya que, dependiendo del área del conocimiento en el que estemos trabajando, los valores de los coeficientes de relación pueden ser significativos o no aunque estos sean muy próximos a cero.*
 
+```{r, message=FALSE}
 # El coeficiente de correlación entre las variables es de r = -0.003853311
 cor(flights$dep_delay, flights$actual_flight_time, use="complete") # Se utiliza use="complete" para no tener encuenta observaciones con valores faltantes
 # Por otro lado, vemos que el coeficiente de Spearman es de r = 0.07894596
 cor(flights$dep_delay, flights$actual_flight_time, use="complete", method = "spearman")
+```
 
-# Los coeficientes de correlación son cercanos a 0, por lo que podríamos pensar que entre ambas variables la relación es inexistente. A pesar de esto, vamos a estudiar una posible relación entre estas dos variables ya que, dependiendo del área del conocimiento en el que estemos trabajando, los valores de los coeficientes de relación pueden ser significativos o no aunque estos sean muy próximos a cero.
+*A medida que los vuelos son más largos, se producen menos retrasos y más cortos. Sin embargo, en los vuelos más cortos es donde se producen los retrasos más duraderos.* 
 
-# A medida que los vuelos son más largos, se producen menos retrasos y más cortos. # Sin embargo, en los vuelos más cortos es donde se producen los retrasos más duraderos.
-#
-# Hay que tener en cuenta que se tienen menos observaciones de viajes largos que de cortos. 
-#
-# En el histograma de más abajo se ve que hay picos de datos en vuelos de 170 minutos, 70 y 110. Cuando los vuelos son de 70 y 110 (o cercanos a estos valores), hay mayor retraso que en los vuelos de 170 (o cercanos a este valor), y es que hay más valores de 170 minutos (o cercanos a este valor) que de 70 y 110. 
-# Por lo tanto, podemos decir que para estos valores no hay problema en que haya menos observaciones.
-# Lamentablemente, no podemos decir lo mismo de valores mayores de 170 minutos (o cercanos a este valor) en los que la función de distribución de probabilidad muestra que hay una disminución pronunciada en las observaciones.
+*Hay que tener en cuenta que se tienen menos observaciones de viajes largos que de cortos.*
+*En el histograma siguiente se aprecia que hay picos de datos en vuelos de 170 minutos, 70 y 110. Cuando los vuelos son de 70 y 110 (o cercanos a estos valores), hay mayor retraso que en los vuelos de 170 (o cercanos a este valor), y es que hay más valores de 170 minutos (o cercanos a este valor) que de 70 y 110.* 
 
+*Por lo tanto, podemos decir que para estos valores no hay problema en que haya menos observaciones.*
+*Lamentablemente, no podemos decir lo mismo de valores mayores de 170 minutos (o cercanos a este valor) en los que la función de distribución de probabilidad muestra que hay una disminución pronunciada en las observaciones.*
+
+*Los diagramas siguientes al histograma me han servido de apoyo para llegar a la conclusión sobre la relación entre la duración de los vuelos y los retrasos.*
+
+```{r, message=FALSE}
 # Histogram actual_flight_time
 flights %>%
   select(actual_flight_time) %>%
@@ -242,7 +255,9 @@ flights %>%
   labs(x="Tiempo de vuelo (min)", y="Retraso (min)") +
   xlim(0, 600) + 
   ggtitle("Relación entre tiempo de vuelo y retrasos en los vuelos. Colour = ratio") 
+
 ```
+
 
 ## Ejercicio 2 (*30 puntos*)
 
@@ -286,11 +301,12 @@ nombres del mes.
 ¿Qué conclusiones puedes extraer a la vista de estos gráficos? Intenta ofrecer argumentos
 basados en los resultados obtenidos para elaborar la respuesta.
 
-```{r, warning=FALSE}
-# Durante los meses de abril, junio, julio, y diciembre se producen los mayores retrasos. Es destacable que en los meses de julio y agosto los mayores retrasos surgen en los viajes con mayor distancia.
-# Esto último contrasta con el resto de meses, cuyo retraso suele ser mayor en los viajes con menor distancia.
-# En los meses de septiembre, octubre y noviembre es cuando se producen los menores retrasos.
+*Durante los meses de abril, junio, julio, y diciembre se producen los mayores retrasos de media. Es destacable que en los meses de julio y agosto los mayores retrasos surgen en los viajes con mayor distancia.*
 
+*Esto último contrasta con el resto de meses, cuyo retraso suele ser mayor en los viajes con menor distancia.*
+
+*En los meses de septiembre, octubre y noviembre es cuando se producen, de media, los retrasos más cortos.*
+```{r, warning=FALSE}
 dist_and_delay <- flights %>%
                     select(tailnum, distance, arr_delay, month) %>%
                     mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE', labels = month.abb)) %>%
@@ -308,7 +324,6 @@ dist_and_delay %>%
   ggtitle("Relación entre distancia y retrasos en los vuelos por mes") +
   scale_radius(name = "Núm. vuelos")
 
-# Como se puede apreciar, es en los meses de julio, junio, diciembre y abril (por este orden) donde, de media, los retrasos son mayores.
 flights %>%
   select(tailnum, distance, arr_delay, month) %>%
   mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE', labels = month.abb)) %>%
@@ -316,7 +331,6 @@ flights %>%
   summarise(count = n (), dist = mean(distance, na.rm = TRUE), delay = mean(arr_delay, na.rm = TRUE)) %>%
   filter(count > 20, dist < 2000) %>%
   arrange(desc(delay))
-  
 ```
 
 *[INTRODUCE AQUÍ LAS CONCLUSIONES]*
@@ -330,7 +344,23 @@ los vuelos domésticos, imponiendo como condición de filtrado de datos:
 
 ¿Qué conclusiones puedes extraer a la vista de estos gráficos?
 
-```{r}
+*En todos los meses menos en el de noviembre, los retrasos son menores a medida que los viajes tienen más distancia.*
+
+*Además, se aprecian cuatro grupos de viajes:*
+
+* * Uno de 187 millas (BOS, General Edward Lawrence Logan Intl)*
+* * Otro de 541 millas (CLT,Charlotte Douglas Intl)*
+* * Otro de 760 millas (ATL, Hartsfield Jackson Atlanta Intl)* 
+* * Otro de 944 millas (MCO, Orlando Intl).* 
+
+*Los cuatro grupos de viajes pueden tener una explicación común: viajes de negocio.*
+
+*A Boston porque alberga una gran cantidad de empresas y centros de educación superior, de hecho Boston es la sexta ciudad con la economía más grande en los Estados Unidos.*
+*A Charlotte ya que esta ciudad es la segunda ciudad de los Estados Unidos tras Nueva York con mayor número de sedes de bancos.* 
+*A Atlanta porque tiene la octava economía más fuerte de los E.E.U.U., ser la tercera ciudad que alberga mayor número de sedes de compañías que pertenecen al Fortune 500 y además el 75% de las empresas del Fortune 1000 están en esta ciudad.*
+*Por último Orlando, en la cual se asientan muchas empresas que se dedican a la alta tecnología y en la que el turismo supone una fuente de ingresos muy importante para esta ciudad porque en Orlando se localizan parques temáticos como el Disney Land Resort y los Universal Studios.*
+
+```{r, warning=FALSE}
 flights %>%
   select(origin, dep_delay, distance, month, tailnum) %>%
   filter(origin == 'JFK', distance < 1000) %>%
@@ -348,12 +378,16 @@ flights %>%
   ylim(0, 250) # Limitamos el eje de ordenadas para poder apreciar mejor la mayoría de observaciones y determinar su tendencia
 ```
 
-*[En todos los meses menos en el de noviembre, los retrasos son menores a medida que los viajes tienen más distancia. Además, se aprecian cuatro grupos de viajes: Uno de 187 millas (BOS, General Edward Lawrence Logan Intl), otro de 541 millas (CLT,Charlotte Douglas Intl), otro de 760 millas (ATL, Hartsfield Jackson Atlanta Intl) y otro de 944 millas (MCO, Orlando Intl). Los cuatro grupos de viajes pueden tener una explicación común: viajes de negocio. A Boston porque alberga una gran cantidad de empresas y centros de educación superior, de hecho Boston es la sexta ciudad con la economía más grande en los Estados Unidos. A Charlotte ya que esta ciudad es la segunda ciudad de los Estados Unidos tras Nueva York con mayor número de sedes de bancos. A Atlanta porque tiene la octava economía más fuerte de los E.E.U.U., ser la tercera ciudad que alberga mayor número de sedes de compañías que pertenecen al Fortune 500 y además el 75% de las empresas del Fortune 1000 están en esta ciudad. Por último Orlando, en la cual se asientan muchas empresas que se dedican a la alta tecnología y en la que el turismo supone una fuente de ingresos muy importante para esta ciudad porque en Orlando se localizan parques temáticos como el Disney Land Resort y los Universal Studios.]*
-
 ## Ejercicio 4 (*20 puntos*)
 Utilizando boxplots (`geom_boxplot`), representar gráficamente una comparativa de los 
 retrasos de salida entre las distintas compañías aéreas, en el mes de diciembre, para el 
 aeropuerto de Newark (código 'EWR'). ¿Se observan diferencias notables?
+
+*Teniendo en cuenta la línea que separa las cajas en dos mitades (que representa la mediana o segundo cuartil, q2) se observa que los aeropuertos con más retrasos son los correspondientes a las siglas WN (8 minutos), UA (7 minutos), AS (4 minutos) y EV (3 minutos).*
+*En el caso contrario tenemos varias compañías cuya mediana de los retrasos es negativa: es decir, los vuelos parten antes de la hora programada.*
+
+*Además, en todos ellos, se aprecia cómo la mayoría de las observaciones se encuentran en el q3, es decir, por encima de la mediana.* 
+*Considero importante remarcar este detalle ya que al ser la mediana una medida de tendencia central y por lo tanto se tienen en cuenta hasta el 50% de los datos ordenados, que haya más observaciones en el q3 indica la tendencia de los vuelos para estas compañías a que tengan retrasos más duraderos.*
 
 ```{r, message=FALSE}
 flights %>%
@@ -364,6 +398,7 @@ flights %>%
   group_by(carrier) %>%
   ggplot(aes(carrier, dep_delay)) +
   geom_boxplot(aes(fill = carrier)) +
+  ggtitle("Comparativa de los retrasos de salida por compañía para el mes de diciembre en el aeropuerto de Newawrk") +
   scale_y_continuous(breaks = round(seq(min(-20), max(500), by = 20), 1), limits = c(-20, 440)) # He limitado el número de valores a mostrar para poder estudiar mejor las diferencias entre compañías centrándome donde se encuentran la mayoría de las observaciones
 
 flights %>%
