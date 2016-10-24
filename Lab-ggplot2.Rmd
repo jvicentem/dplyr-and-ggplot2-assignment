@@ -204,8 +204,8 @@ cor(flights$dep_delay, flights$actual_flight_time, use="complete", method = "spe
 flights %>%
   select(actual_flight_time) %>%
   mutate(count = n()) %>%  
-  ggplot(aes(x=actual_flight_time)) +
-  geom_histogram(aes(y=..density..), binwidth=10, colour="black", fill="white") +
+  ggplot(aes(x = actual_flight_time)) +
+  geom_histogram(aes(y = ..density..), binwidth=10, colour="black", fill="white") +
   geom_density(alpha=.2, fill="#FF6666") +  
   xlim(0, 600) 
 
@@ -309,7 +309,7 @@ basados en los resultados obtenidos para elaborar la respuesta.
 ```{r, warning=FALSE}
 dist_and_delay <- flights %>%
                     select(tailnum, distance, arr_delay, month) %>%
-                    mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE', labels = month.abb)) %>%
+                    mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE')) %>%
                     group_by(month, tailnum) %>%
                     summarise(count = n (), dist = mean(distance, na.rm = TRUE), delay = mean(arr_delay, na.rm = TRUE)) %>%
                     filter(count > 20, dist < 2000) 
@@ -326,7 +326,7 @@ dist_and_delay %>%
 
 flights %>%
   select(tailnum, distance, arr_delay, month) %>%
-  mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE', labels = month.abb)) %>%
+  mutate(month = factor(month.abb[month], levels = month.abb, ordered = 'TRUE')) %>%
   group_by(month) %>%
   summarise(count = n (), dist = mean(distance, na.rm = TRUE), delay = mean(arr_delay, na.rm = TRUE)) %>%
   filter(count > 20, dist < 2000) %>%
